@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Happy Dussehra, Pooja</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&family=Great+Vibes&family=Poppins:wght@300;500&display=swap" rel="stylesheet">
+<style>
+  :root{--night:#120a2a;--plum:#34103f;--ember:#7a1f3d;--gold:#ffd166;--cream:#fff3d6;
+    box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  html,body{height:100%;margin:0;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+  body{background:radial-gradient(ellipse at 50% 100%,#c2410c 0%,#7a1f3d 38%,#2a0f3a 72%,#14082a 100%);color:var(--cream);font-family:"Poppins",system-ui,sans-serif}
+  canvas{position:fixed;inset:0;width:100%;height:100%}
+  #hint{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 78px);text-align:center;pointer-events:none;transition:opacity .8s}
+  #h1{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:clamp(22px,5vw,30px);color:var(--gold)}
+  #h2{margin-top:8px;font-size:11px;letter-spacing:.26em;opacity:.7}
+  body.done #hint{opacity:0}
+  #h3{margin-top:20px;min-height:1.4em;padding:0 8%;font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:clamp(19px,4.4vw,26px);color:var(--cream);transition:opacity .5s}
+  #rot{margin:14px auto 0;max-width:min(92%,560px);min-height:3.2em;font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:clamp(19px,4.2vw,26px);line-height:1.4;color:#ffe3b8;transition:opacity .7s}
+  #wish{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + max(84px,9%));text-align:center;pointer-events:none;opacity:0;transition:opacity 2s ease 1.2s;padding:0 5%}
+  body.done #wish{opacity:1}
+  #wish .sm{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-size:clamp(17px,3.8vw,23px);color:#f3cf9a}
+  #wish .nm{display:inline-block;font-family:"Great Vibes",cursive;font-size:clamp(76px,18vw,160px);line-height:1.1;padding:.04em .14em .14em;
+    background:linear-gradient(100deg,#ffb703 0%,#fff3b0 30%,#ff9f1c 50%,#fff3b0 70%,#ffb703 100%);background-size:250% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+    animation:shine 5s linear infinite;filter:drop-shadow(0 0 18px rgba(255,159,28,.45))}
+  #wish .love{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-weight:600;font-size:clamp(26px,6vw,40px);margin:0 0 8px}
+  @keyframes shine{to{background-position:-250% 0}}
+  #snd{position:fixed;top:calc(env(safe-area-inset-top,0px) + 74px);right:16px;z-index:6;border:0;background:rgba(255,255,255,.14);color:var(--cream);width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer}
+  #again{position:fixed;right:20px;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);border:1px solid rgba(255,243,214,.45);background:rgba(255,255,255,.1);color:var(--cream);
+    padding:8px 16px;border-radius:99px;font:500 11px "Poppins",sans-serif;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .6s 4s}
+  body.done #again{opacity:1;pointer-events:auto}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hint"><div id="h1">make every flower bloom</div><div id="h2">0 of 5 &middot; tap or swipe across the flowers</div><div id="h3"></div></div>
+<div id="wish"><div class="sm">Sona ghya, sonyasarkhe raha</div><div class="nm" id="name"></div><div class="love">Happy Dussehra</div><div class="sm" id="msg"></div><div id="rot"></div></div>
+<button id="snd" aria-label="Toggle sound">🔊</button>
+<button id="again">again</button>
+
+<script>
+// ✏️ PERSONALISE HERE (or open the page with ?to=Name)
+const NAME = new URLSearchParams(location.search).get('to') || 'Pooja';
+const MESSAGE = 'may your life bloom like marigolds, bright and full of joy';
+document.getElementById('name').textContent = NAME;
+document.getElementById('msg').textContent = MESSAGE;
+document.title = 'Happy Dussehra, ' + NAME;
+
+let AC=null, muted=false;
+function ac(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } if(AC&&AC.state==='suspended')AC.resume(); return AC; }
+function tone(f,t0,dur,type,vol){ const a=ac(); if(!a||muted)return; const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+t0;
+  o.type=type||'sine'; o.frequency.value=f; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol||.1,t+.02);
+  g.gain.exponentialRampToValueAtTime(.0001,t+dur); o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+dur+.05); }
+const SONG=[[523,1],[587,1],[659,1.5],[784,.5],[880,1],[784,1],[659,2],[587,1],[659,1],[784,1.5],[880,.5],[1047,1],[880,1],[784,2],[659,1],[587,1],[523,3]];
+function playSong(){ let t=0; const bt=.6; SONG.forEach(([f,b])=>{ setTimeout(()=>{ tone(f,0,b*bt*1.7,'sine',.1); tone(f*2,0,b*bt,'sine',.03); }, t*1000); t+=b*bt; }); }
+function boom(){ tone(80,0,.5,'triangle',.14); tone(45,0,.6,'sine',.12); tone(1500+Math.random()*900,.04,.18,'sine',.03); }
+document.getElementById('snd').addEventListener('click', e=>{ muted=!muted; e.target.textContent = muted?'🔇':'🔊'; });
+
+const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+const N=5; let sona=[],GY=0,W,H,dpr,diyas=[],stars=[],parts=[],rockets=[],lit=0,done=false,down=false,autoT=0;
+for(let i=0;i<80;i++) stars.push({x:Math.random(),y:Math.random()*.75,r:.5+Math.random()*1.3,ph:Math.random()*6});
+
+const tor=document.createElement('canvas');
+function toran(g){                                   // marigold + mango-leaf door garland
+  const n=Math.max(3,Math.round(W/260)), y0=8;
+  for(let k0=0;k0<n;k0++){ const x0=W*k0/n,x1=W*(k0+1)/n,sag=Math.min(32,(x1-x0)*.11);
+    g.strokeStyle='#5a3a10'; g.lineWidth=1.5; g.beginPath();
+    for(let k=0;k<=20;k++){ const t=k/20; g.lineTo(x0+(x1-x0)*t,y0+sag*4*t*(1-t)); } g.stroke();
+    for(let k=0;k<=14;k++){ const t=k/14,x=x0+(x1-x0)*t,y=y0+sag*4*t*(1-t);
+      if(k%2===0){ g.fillStyle='#2f8f4e'; g.beginPath(); g.moveTo(x,y+5); g.quadraticCurveTo(x+7,y+15,x,y+25); g.quadraticCurveTo(x-7,y+15,x,y+5); g.fill(); }
+      g.fillStyle=k%2?'#ffb703':'#ff8c1a'; for(let i=0;i<6;i++){ g.beginPath(); g.arc(x+Math.cos(i)*4.5,y+Math.sin(i)*4.5,3.6,0,7); g.fill(); }
+      g.fillStyle='#c2410c'; g.beginPath(); g.arc(x,y,3,0,7); g.fill(); } }
+}
+function drawGround(){
+  ctx.fillStyle='#14061f'; ctx.beginPath(); ctx.moveTo(0,H); for(let x=0;x<=W+8;x+=8) ctx.lineTo(x,GY-Math.sin(x*.012+1)*10); ctx.lineTo(W,H); ctx.fill();
+  for(let x=8,i=0;x<W;x+=16,i++){ const y=GY-Math.sin(x*.012+1)*10+4+(i%3);
+    ctx.fillStyle=['#ff8c1a','#ffb703','#ff9f1c'][i%3]; ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.fill();
+    ctx.fillStyle='#c2410c'; ctx.beginPath(); ctx.arc(x,y,1.7,0,7); ctx.fill(); }
+}
+function layout(){
+  const gap=Math.min(W/(N+.4),150), s=Math.min(gap*.8,96), x0=W/2-gap*(N-1)/2, old=diyas;
+  GY=H*.9; const by=GY-Math.min(H*.3,260);
+  diyas=[...Array(N)].map((_,i)=>({x:x0+i*gap,y:by-Math.sin(Math.PI*i/(N-1))*Math.min(H*.06,50),s,lit:old[i]?old[i].lit:false,t:old[i]?old[i].t:0,ph:Math.random()*6}));
+  tor.width=W*dpr; tor.height=H*dpr; const tg=tor.getContext("2d"); tg.setTransform(dpr,0,0,dpr,0,0); toran(tg);
+}
+function resize(){ dpr=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight; cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); layout(); }
+addEventListener('resize',resize); resize();
+
+function drawBody(T){                          // stems and leaves
+  ctx.lineCap='round';
+  for(const d of diyas){ const hx=d.x+Math.sin(T*1.5+d.ph)*2, top=d.y+d.s*.2, bend=Math.sin(d.ph)*14;
+    ctx.strokeStyle='#2f8f4e'; ctx.lineWidth=Math.max(4,d.s*.07); ctx.beginPath(); ctx.moveTo(d.x,GY+8); ctx.quadraticCurveTo(d.x+bend,(GY+top)/2,hx,top); ctx.stroke();
+    ctx.fillStyle='#3fae5a';
+    for(const [t,k] of [[.38,-1],[.62,1]]){ const lx=d.x+bend*.6, ly=GY-(GY-top)*t, S=d.s;
+      ctx.beginPath(); ctx.moveTo(lx,ly); ctx.quadraticCurveTo(lx+k*S*.3,ly-S*.38,lx+k*S*.55,ly-S*.2); ctx.quadraticCurveTo(lx+k*S*.28,ly+S*.02,lx,ly); ctx.fill(); } }
+}
+function drawBF(T){                            // little butterflies after the finale
+  for(let i=0;i<4;i++){ const x=W*(.2+.2*i)+Math.sin(T*.7+i*2)*W*.08, y=H*(.3+.08*i)+Math.cos(T*.9+i*1.3)*H*.05, f=Math.abs(Math.sin(T*9+i));
+    ctx.fillStyle=['#ff8fab','#ffd166','#c77dff','#7dd3fc'][i];
+    for(const k of [-1,1]){ ctx.beginPath(); ctx.ellipse(x+k*6*f,y-3,11*f+1,8,k*.5,0,7); ctx.fill(); ctx.beginPath(); ctx.ellipse(x+k*4*f,y+6,7*f+1,6,k*.3,0,7); ctx.fill(); }
+    ctx.fillStyle='#3a1a10'; ctx.fillRect(x-1,y-8,2,17); }
+}
+function drawDiya(d,T){                         // a cute marigold that blooms
+  const R=d.s*.5, x=d.x+Math.sin(T*1.5+d.ph)*2, y=d.y, b=d.lit?Math.min(1,d.t/.9):0;
+  const e=.35+.65*(1+2.70158*Math.pow(b-1,3)+1.70158*Math.pow(b-1,2));
+  if(d.lit){
+    const R2=R*3*Math.min(1,d.t/.6)*(.93+.07*Math.sin(T*6+d.ph)), gr=ctx.createRadialGradient(x,y,0,x,y,R2);
+    gr.addColorStop(0,'rgba(255,200,90,.5)'); gr.addColorStop(1,'rgba(255,150,40,0)');
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(x,y,R2,0,7); ctx.fill(); ctx.restore();
+  }
+  ctx.fillStyle='#3fae5a'; ctx.beginPath(); ctx.ellipse(x,y+R*.55,R*.48,R*.34,0,0,7); ctx.fill();   // green calyx
+  if(!d.lit){                                   // sleepy bud
+    const bu=R*.62, bg=ctx.createRadialGradient(x-bu*.3,y-bu*.4,2,x,y,bu*1.2); bg.addColorStop(0,'#ffd166'); bg.addColorStop(1,'#ff8c1a');
+    ctx.fillStyle=bg; ctx.beginPath(); ctx.ellipse(x,y,bu*.95,bu*1.05,0,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(194,65,12,.35)'; ctx.lineWidth=1.5; for(const k of [-1,0,1]){ ctx.beginPath(); ctx.moveTo(x+k*bu*.55,y-bu*.85); ctx.quadraticCurveTo(x+k*bu*.9,y,x+k*bu*.4,y+bu*.9); ctx.stroke(); }
+    ctx.strokeStyle='#6a2a08'; ctx.lineWidth=2.2; for(const k of [-1,1]){ ctx.beginPath(); ctx.arc(x+k*bu*.36,y+bu*.02,bu*.14,.15*Math.PI,.85*Math.PI); ctx.stroke(); }
+    ctx.fillStyle='rgba(255,110,140,.55)'; for(const k of [-1,1]){ ctx.beginPath(); ctx.arc(x+k*bu*.58,y+bu*.3,bu*.13,0,7); ctx.fill(); }
+    ctx.beginPath(); ctx.arc(x,y+bu*.2,bu*.1,.1*Math.PI,.9*Math.PI); ctx.stroke();
+    ctx.strokeStyle='rgba(255,209,102,'+(.25+.25*Math.sin(T*3+d.ph))+')'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(x,y,R*.95+3*Math.sin(T*3+d.ph),0,7); ctx.stroke();
+    return;
+  }
+  const ring=(n,dist,rx,ry,off,col)=>{ ctx.fillStyle=col; for(let i=0;i<n;i++){ const a=i/n*6.283+off;
+    ctx.beginPath(); ctx.ellipse(x+Math.cos(a)*dist*e,y+Math.sin(a)*dist*e,rx*e,ry*e,a,0,7); ctx.fill(); } };
+  ring(12,R*.62,R*.42,R*.23,.26,'#ff9f1c'); ring(10,R*.45,R*.34,R*.2,0,'#ffb703'); ring(8,R*.28,R*.26,R*.15,.2,'#ffd166');
+  if(b>.3){                                     // smiling face
+    const fr=R*.3*e; ctx.globalAlpha=Math.min(1,(b-.3)/.4);
+    ctx.fillStyle='#ffe9a8'; ctx.beginPath(); ctx.arc(x,y,fr,0,7); ctx.fill();
+    ctx.fillStyle='#3a1a10'; for(const k of [-1,1]){ ctx.beginPath(); ctx.arc(x+k*fr*.38,y-fr*.08,fr*.14,0,7); ctx.fill(); }
+    ctx.fillStyle='#fff'; for(const k of [-1,1]){ ctx.beginPath(); ctx.arc(x+k*fr*.38+fr*.04,y-fr*.12,fr*.05,0,7); ctx.fill(); }
+    ctx.fillStyle='rgba(255,110,140,.6)'; for(const k of [-1,1]){ ctx.beginPath(); ctx.arc(x+k*fr*.62,y+fr*.18,fr*.17,0,7); ctx.fill(); }
+    ctx.strokeStyle='#3a1a10'; ctx.lineWidth=Math.max(1.5,fr*.07); ctx.lineCap='round'; ctx.beginPath(); ctx.arc(x,y+fr*.08,fr*.22,.15*Math.PI,.85*Math.PI); ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+}
+
+const SETS=[['#ffd166','#fff3b0','#ff9f1c'],['#ff5d8f','#ffb3c7','#ffffff'],['#ff9f1c','#e8590c','#ffe08a'],['#c77dff','#ffd166','#ffffff']];
+function burst(x,y){
+  boom(); const set=SETS[Math.floor(Math.random()*SETS.length)], ring=Math.random()<.4;
+  for(let i=0;i<80;i++){
+    const a=Math.random()*Math.PI*2, sp=ring?230:70+Math.random()*230;
+    parts.push({x,y,px:x,py:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,g:130,k:1.1,life:1.3+Math.random()*.9,t:0,c:set[i%3],w:2.2});
+  }
+}
+function launch(tx,ty){
+  const x=tx==null?W*(.12+.76*Math.random()):tx, y=ty==null?H*(.14+.34*Math.random()):ty;
+  rockets.push({x,y:H+10,vx:(Math.random()-.5)*30,vy:-760,ty:y}); tone(300,0,.4,'sawtooth',.02);
+}
+
+const WISHES=['this flower is for your happiness','this flower is for our friendship','this flower is for all my love','this flower is for your dreams','and this flower is for forever'];
+const LINES=['You are the calm in my busiest days.','Thank you for being my friend, my safe place, my person.','Every little thing feels brighter with you in it.','A friend like you is the rarest kind of treasure.','My favourite place is wherever you are.','You laugh with me and stand by me, and that is everything.','I fell for your smile, and I stayed for your heart.','You make ordinary days feel like festivals.','Through every season, I am grateful to have you.','Some people light up a room; you light up my whole life.'];
+let rotTimer=null;
+function startRot(){
+  if(!done) return; const el=document.getElementById('rot'); let i=0;
+  const show=()=>{ el.style.opacity=0; setTimeout(()=>{ el.textContent=LINES[i++%LINES.length]; el.style.opacity=1; },700); };
+  show(); rotTimer=setInterval(show,5200);
+}
+function light(d){
+  if(d.lit) return; ac(); d.lit=true; d.t=0; lit++;
+  for(let i=0;i<26;i++){ const a=Math.random()*6.283, sp=60+Math.random()*160; parts.push({x:d.x,y:d.y,px:d.x,py:d.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-40,g:160,k:1.3,life:.7+Math.random()*.5,t:0,c:['#ffd166','#fff3b0','#ff9f1c'][i%3],w:2}); }
+  tone(660,0,.12,'sine',.06);
+  const h3=document.getElementById('h3'), wi=lit-1; h3.style.opacity=0; setTimeout(()=>{ h3.textContent=WISHES[wi]; h3.style.opacity=1; },250);
+  tone([523,587,659,784,880][(lit-1)%5],0,1.3,'sine',.12); tone(1568,.06,.5,'sine',.035);
+  document.getElementById('h2').innerHTML = lit+' of '+N+' &middot; tap or swipe across the flowers';
+  if(lit===N) finale();
+}
+function hit(px,py){ for(const d of diyas) if(Math.hypot(px-d.x,py-(d.y-d.s*.2))<d.s*.7) light(d); }
+function finale(){
+  done=true; document.body.classList.add('done'); autoT=3;
+  [200,550,900,1250,1600,1950].forEach(ms=>setTimeout(()=>launch(),ms)); setTimeout(playSong,900); setTimeout(startRot,2600);
+}
+cv.addEventListener('pointerdown',e=>{ ac(); down=true; if(done) launch(e.clientX,e.clientY); else hit(e.clientX,e.clientY); });
+cv.addEventListener('pointermove',e=>{ if(down&&!done) hit(e.clientX,e.clientY); });
+addEventListener('pointerup',()=>down=false); addEventListener('pointercancel',()=>down=false);
+document.getElementById('again').addEventListener('click',()=>{
+  done=false; lit=0; parts=[]; rockets=[]; sona=[]; document.body.classList.remove('done');
+  clearInterval(rotTimer); document.getElementById('rot').textContent=''; document.getElementById('h3').textContent='';
+  diyas.forEach(d=>{d.lit=false;d.t=0;}); document.getElementById('h2').innerHTML='0 of '+N+' &middot; tap or swipe across the flowers';
+});
+
+let last=performance.now(), T=0;
+function frame(now){
+  const dt=Math.min(.04,(now-last)/1000); last=now; T+=dt;
+  ctx.clearRect(0,0,W,H);
+  for(const st of stars){ ctx.fillStyle='rgba(255,240,200,'+(.8*(.4+.6*Math.abs(Math.sin(T*.8+st.ph))))+')'; ctx.beginPath(); ctx.arc(st.x*W,st.y*H,st.r,0,7); ctx.fill(); }
+  ctx.drawImage(tor,0,0,W,H);
+  if(done && (autoT-=dt)<0){ autoT=.9+Math.random()*1.1; launch(); }
+  if(done && sona.length<70 && Math.random()<.3) sona.push({x:Math.random()*W,y:-20,vx:(Math.random()-.5)*30,vy:40+Math.random()*50,rot:Math.random()*6,vr:(Math.random()-.5)*3,L:16+Math.random()*12,ph:Math.random()*6,c:['#ffcf4d','#ffb703','#ffe08a'][(Math.random()*3)|0]});
+  for(const d of diyas) if(d.lit && Math.random()<.3)
+    parts.push({x:d.x+(Math.random()-.5)*6,y:d.y-d.s*.6,px:0,py:0,vx:(Math.random()-.5)*16,vy:-30-Math.random()*30,g:0,k:0,life:2.2,t:0,c:'#ffb347',w:2});
+  ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineCap='round';
+  rockets=rockets.filter(r=>{
+    r.x+=r.vx*dt; r.y+=r.vy*dt; if(r.y<=r.ty){ burst(r.x,r.y); return false; }
+    ctx.globalAlpha=1; ctx.fillStyle='#fff3c0'; ctx.beginPath(); ctx.arc(r.x,r.y,2.6,0,7); ctx.fill();
+    parts.push({x:r.x,y:r.y,px:r.x,py:r.y,vx:(Math.random()-.5)*20,vy:30,g:0,k:0,life:.5,t:0,c:'#ffd9a0',w:2}); return true; });
+  parts=parts.filter(p=>(p.t+=dt)<p.life);
+  for(const p of parts){
+    p.px=p.x; p.py=p.y; p.vy+=p.g*dt; p.vx*=1-p.k*dt; p.vy*=1-p.k*dt; p.x+=p.vx*dt; p.y+=p.vy*dt;
+    ctx.globalAlpha=Math.max(0,1-p.t/p.life); ctx.strokeStyle=p.c; ctx.lineWidth=p.w;
+    ctx.beginPath(); ctx.moveTo(p.px,p.py); ctx.lineTo(p.x+.01,p.y); ctx.stroke(); }
+  ctx.restore(); ctx.globalAlpha=1;
+  sona=sona.filter(p=>p.y<H+30);
+  for(const p of sona){ p.y+=p.vy*dt; p.x+=(p.vx+Math.sin(T*2+p.ph)*30)*dt; p.rot+=p.vr*dt;
+    const co=Math.cos(p.rot),si=Math.sin(p.rot),w=p.L*.32,mx=p.x+co*p.L*.5,my=p.y+si*p.L*.5;
+    ctx.fillStyle=p.c; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.quadraticCurveTo(mx-si*w,my+co*w,p.x+co*p.L,p.y+si*p.L); ctx.quadraticCurveTo(mx+si*w,my-co*w,p.x,p.y); ctx.fill(); }
+  drawBody(T);
+  for(const d of diyas){ if(d.lit) d.t+=dt; drawDiya(d,T); }
+  drawGround();
+  if(done) drawBF(T);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
